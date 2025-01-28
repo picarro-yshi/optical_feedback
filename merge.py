@@ -15,12 +15,12 @@ import traceback
 from utility import header, unixTimeToTimestamp
 
 
-def fillRdfTables(fileName, spectraInScheme, attrs=None):
-    """Save data from spectraInScheme to tables in an HDF5 output file.
+def fillRdfTables(fileName, spectrumDict, attrs=None):
+    """Save data from spectrumDict to tables in an HDF5 output file.
 
     Args:
         fileName: Name of HDF5 file to receive spectra
-        spectraInScheme: This is a list of dictionaries, one for each spectrum. Each spectrum consists
+        spectrumDict: This is a dictionary corresponding to 1 optical file/one spectrum. It consists
             of a dictionary with keys "rdData", "sensorData", "tagalongData" and "controlData". The
             values are tables of data (stored as a dictionary whose keys are the column names and whose
             values are lists of the column data) which are to be written to the output file.
@@ -44,48 +44,48 @@ def fillRdfTables(fileName, spectraInScheme, attrs=None):
             uint32=UInt32Col,
             uint64=UInt64Col,
         )
+
         # We make HDF5 tables and define the columns needed in these tables
         tableDict = {}
-        for spectrum in spectraInScheme:
-            # Iterate over rdData, sensorData, tagalongData and controlData tables
-            for tableName in spectrum:
-                if tableName in [
-                    "rdData",
-                    "sensorData",
-                    "tagalongData",
-                    "controlData",
-                ]:
-                    spectTableData = spectrum[tableName]
-                    if len(spectTableData) > 0:
-                        keys, values = list(zip(*sorted(spectTableData.items())))
-                        if tableName not in tableDict:
-                            # We are encountering this table for the first time, so we
-                            #  need to build up colDict whose keys are the column names and
-                            #  whose values are the subclasses of Col used by pytables to
-                            #  define the HDF5 column. These are retrieved from colByName.
-                            colDict = {}
-                            # Use numpy to get the dtype names for the various data
-                            values = [np.asarray(v) for v in values]
-                            for key, value in zip(keys, values):
-                                colDict[key] = colByName[value.dtype.name]()
-                            tableDict[tableName] = hdf5Handle.create_table(
-                                hdf5Handle.root,
-                                tableName,
-                                colDict,
-                                filters=hdf5Filters,
-                            )
-                        table = tableDict[tableName]
-                        # Go through the arrays in values and fill up each row of the table
-                        #  one element at a time
-                        row = table.row
-                        for j in range(len(values[0])):
-                            for i, key in enumerate(keys):
-                                try:
-                                    row[key] = values[i][j]
-                                except KeyError:
-                                    pass
-                            row.append()
-                        table.flush()
+        # Iterate over rdData, sensorData, tagalongData and controlData tables
+        for tableName in spectrumDict:
+            if tableName in [
+                "rdData",
+                "sensorData",
+                "tagalongData",
+                "controlData",
+            ]:
+                spectTableData = spectrumDict[tableName]
+                if len(spectTableData) > 0:
+                    keys, values = list(zip(*sorted(spectTableData.items())))
+                    if tableName not in tableDict:
+                        # We are encountering this table for the first time, so we
+                        #  need to build up colDict whose keys are the column names and
+                        #  whose values are the subclasses of Col used by pytables to
+                        #  define the HDF5 column. These are retrieved from colByName.
+                        colDict = {}
+                        # Use numpy to get the dtype names for the various data
+                        values = [np.asarray(v) for v in values]
+                        for key, value in zip(keys, values):
+                            colDict[key] = colByName[value.dtype.name]()
+                        tableDict[tableName] = hdf5Handle.create_table(
+                            hdf5Handle.root,
+                            tableName,
+                            colDict,
+                            filters=hdf5Filters,
+                        )
+                    table = tableDict[tableName]
+                    # Go through the arrays in values and fill up each row of the table
+                    #  one element at a time
+                    row = table.row
+                    for j in range(len(values[0])):
+                        for i, key in enumerate(keys):
+                            try:
+                                row[key] = values[i][j]
+                            except KeyError:
+                                pass
+                        row.append()
+                    table.flush()
     except:
         print(traceback.format_exc())
     finally:
@@ -110,12 +110,12 @@ def find_circle_centers(X,Y):
 
 
 def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
-    """Save data from spectraInScheme to tables in an HDF5 output file.
+    """combine optical file and its corresponding sensor data then save as RDF h5 file.
 
     Args:
         optical_path: path of optical data csv
         sensor_data_list: list of paths of all sensor data csv files for this optical file
-        out_path: path of output h5 file
+        out_path: path of output h5 file, will have the same file name as optical file
         cal_file
     """
 
@@ -246,12 +246,8 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
     for item in header:
         spectrumDict["sensorData"][item] = combined_df[item].tolist()
 
-    spectra_in_scheme = []
-    spectra_in_scheme.append(spectrumDict)
-
-    fillRdfTables(out_path, spectra_in_scheme)
-
-    return spectrumDict
+    # save spectrumDict to h5 file
+    fillRdfTables(out_path, spectrumDict)
 
 
 if __name__ == "__main__":
@@ -286,7 +282,6 @@ if __name__ == "__main__":
     time_adjust = 18000
     optical_time_list = []  # [start, end] list, day_hour+minute
     for op in optical_file_list:
-        # print("optical file: ", op)
         p1 = os.path.join(optical_folder_path, op + '.csv')
         df = pd.read_csv(p1)
         # Access a specific value using row and column index
@@ -315,7 +310,6 @@ if __name__ == "__main__":
     
     for (start, end) in optical_time_list:
         matchDict[start] = []
-        # print(start, end)
         # print("sensor list length: ", len(sensor_dynamic_list))
         x = []
         for s in sensor_dynamic_list:
@@ -332,7 +326,7 @@ if __name__ == "__main__":
                 break
     # print(matchDict)
 
-    # start to create h5
+    # create h5
     for op in optical_file_list:
         if matchDict[op]:
             p1 = os.path.join(optical_folder_path, op + '.csv')
