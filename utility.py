@@ -1,5 +1,6 @@
 # constants, utility functions
 import datetime
+import yaml
 
 header = [
     "timestamp",
@@ -47,6 +48,11 @@ def unixTimeToTimestamp(u):
 def datetimeToTimestamp(t):
     td = t - ORIGIN
     return (td.days * 86400 + td.seconds) * 1000 + td.microseconds // 1000
+
+def load_conf():
+    with open("config.yaml", 'r') as f:
+        conf = yaml.load(f, Loader=yaml.SafeLoader)
+    return conf
 
 
 ################# for reference ####################

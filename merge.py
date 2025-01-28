@@ -12,7 +12,7 @@ from tables import Float32Col, Float64Col, Int16Col, Int32Col, Int64Col
 from tables import UInt16Col, UInt32Col, UInt64Col
 import traceback
 
-from utility import header, unixTimeToTimestamp
+from utility import header, unixTimeToTimestamp, load_conf
 
 
 def fillRdfTables(fileName, spectrumDict, attrs=None):
@@ -251,11 +251,11 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
 
 
 if __name__ == "__main__":
-    # user input
-    optical_folder_path = "/Volumes/Data/crd_optical_feedback_analyzer_rnd/RDF_logging/20250123_6029_yshi"
-    sensor_folder_path = "/Volumes/Data/crd_optical_feedback_analyzer_rnd/SensorStream_logging"
-    output_folder = "/Volumes/Data/crd_optical_feedback_analyzer_rnd/experiments/20250123_6029_zero"
-
+    conf = load_conf()
+    print(conf)
+    optical_folder_path = conf["optical_folder_path"]
+    sensor_folder_path = conf["sensor_folder_path"]
+    output_folder = conf["output_folder"]
 
     # get the optical data time range and file list
     p = os.path.join(optical_folder_path, "*.csv")

@@ -1,0 +1,12 @@
+analyzerIP: "10.100.3.36"
+
+# for sensor data streaming
+sensor_folder_path: "/Volumes/Data/crd_optical_feedback_analyzer_rnd/SensorStream_logging"
+save_interval: 60  # s, save a csv file every 1 min
+
+# for save RDF file
+optical_folder_path: "/Volumes/Data/crd_optical_feedback_analyzer_rnd/RDF_logging/20250123_6029_yshi"
+output_folder: "/Volumes/Data/crd_optical_feedback_analyzer_rnd/experiments/20250123_6029_zero"
+
+
+
