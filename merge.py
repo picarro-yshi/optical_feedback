@@ -1,4 +1,5 @@
 # merge optical data with sensor data
+# last updated: 2025.2.19
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -139,11 +140,11 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         rd_data["ratio1"],
         rd_data["ratio2"])
 
-        plt.figure(figsize=(6,6))
-        plt.plot(rd_data["ratio1"], rd_data["ratio2"], ".")
-        circle1 = plt.Circle((x_center, y_center), radius, edgecolor='r', fill=False, linewidth=2, zorder=10)
-        plt.gca().add_patch(circle1)
-        plt.title("find circle center")
+        # plt.figure(figsize=(6,6))
+        # plt.plot(rd_data["ratio1"], rd_data["ratio2"], ".")
+        # circle1 = plt.Circle((x_center, y_center), radius, edgecolor='r', fill=False, linewidth=2, zorder=10)
+        # plt.gca().add_patch(circle1)
+        # plt.title("find circle center")
 
         wlm_angle_recalc = np.arctan2(rd_data["ratio2"] - y_center, rd_data["ratio1"] - x_center)
         wlm_angle_recalc = rd_data['anglesSetpoint'] - np.pi + (wlm_angle_recalc - rd_data['anglesSetpoint'] + np.pi) % (2*np.pi)
@@ -251,6 +252,8 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
 
 
 if __name__ == "__main__":
+    t0 = time.time()
+
     conf = load_conf()
     print(conf)
     optical_folder_path = conf["optical_folder_path"]
@@ -264,8 +267,8 @@ if __name__ == "__main__":
     # only include sensor folders within this date range
     date_range = []  # ['20250123', '20250124']
     
-    for i in ls:
-        x = i.split('/')[-1]
+    for p in ls:
+        x = p.split('/')[-1]
         f1 = x[:-4]  # 20250123_1519
         try:
             t1 = int(time.mktime(time.strptime(f1, "%Y%m%d_%H%M")))
@@ -277,18 +280,23 @@ if __name__ == "__main__":
             pass
 
     optical_file_list.sort()  # ['20250122_1336']
+    print("* total number of optical files: ", len(optical_file_list))
 
     # match optical data with the list of sensor data covering it
-    time_adjust = 18000
     optical_time_list = []  # [start, end] list, day_hour+minute
+    i = 1
     for op in optical_file_list:
+        if i % 20 == 0:
+            print("... %s optical files read" % i)
+        i += 1
+
         p1 = os.path.join(optical_folder_path, op + '.csv')
         df = pd.read_csv(p1)
         # Access a specific value using row and column index
-        end_epoch = df.iloc[-1, 1] + time_adjust  # last row, timestamp
+        end_epoch = df.iloc[-1, 1] + 18000  # last row, timestamp, (+5h)
         end_file = time.strftime('%Y%m%d_%H%M', time.localtime(end_epoch))
         optical_time_list.append([op, end_file])  # ["20250123_1519", "20250123_1525"]
-    print("... end time of optical files extracted.")
+    print("* End time of all optical files extracted.")
 
     sensor_folder_list = []
     for day in date_range:
@@ -297,6 +305,7 @@ if __name__ == "__main__":
     # pick all available sensor file paths
     temp = []
     for item in sensor_folder_list:
+        print(item)
         p = os.path.join(sensor_folder_path, item, "*.csv")
         ls = glob(p)
         # if folder does not exist, ls=[]
@@ -327,19 +336,25 @@ if __name__ == "__main__":
     # print(matchDict)
 
     # create h5
+    i = 1
     for op in optical_file_list:
+        if i % 20 == 0:
+            print("... %s RDF files created" % i)
+        i += 1
+
         if matchDict[op]:
             p1 = os.path.join(optical_folder_path, op + '.csv')
             out_path = os.path.join(output_folder, op+'.h5')
             try:
                 convert_to_rdf(p1, matchDict[op], out_path, None)
-                print("created RDF for optical file: %s.csv" % op)
+                # print("created RDF for optical file: %s.csv" % op)
             except:
                 print("Failed to create RDF file for: %s.csv " % op)
         else:
             print("No sensor data for optical file: %s.csv" % op)
 
-
+    t = time.time() - t0
+    print("* Merge finished! took %.2f min " % (t/60))
 
 
 

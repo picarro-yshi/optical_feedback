@@ -1,4 +1,5 @@
-# stream sensor data to r-drive
+# stream sensor data to r-drive.
+# last updated: 2025.2.19
 
 import os
 import queue
@@ -120,7 +121,7 @@ if __name__ == "__main__":
                         subfolder = os.path.join(SENSOR_FOLDER, today)
                         os.mkdir(subfolder)
                         day_folder = today
-                        print("a new day just started.")
+                        print("a new day just started: ", time.ctime())
 
                     p = os.path.join(SENSOR_FOLDER, day_folder, f1)
                     try:
