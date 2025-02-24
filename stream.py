@@ -87,6 +87,10 @@ if __name__ == "__main__":
         retry=True,
         name="Sensor stream listener",
     )
+    
+    uncopied = []  # uncopied csv files, try again later
+    if not os.path.isdir("../temp"):
+        os.mkdir("../temp")
 
     try:
         print("start recording sensor data, press ctrl+C to quit...")
@@ -112,6 +116,18 @@ if __name__ == "__main__":
 
                 t = int(time.time())
                 if t - t0 > save_time:
+                    # data failed to save to r-drive previously: try again
+                    if uncopied:
+                        for i in range(len(uncopied)):
+                            try:
+                                f0 = uncopied[0]
+                                shutil.copy2("../temp/" + f0, os.path.join(SENSOR_FOLDER, 'Sensors_' + f0[:8], f0))
+                                print("* copy to r-drive successful: %s" % f0)
+                                uncopied.pop(0)
+                                os.remove("../temp/" + f0)
+                            except:
+                                pass
+
                     # create csv
                     my_df = pd.DataFrame(huge_list)
 
@@ -128,7 +144,10 @@ if __name__ == "__main__":
                         my_df.to_csv(p, index=False, header=header)
                         # print("file saved:  %s" % f1)
                     except:
-                        print('error save csv')
+                        # save locally then move later
+                        my_df.to_csv("../temp/" + f1, index=False, header=header)
+                        uncopied.append(f1)
+                        print("! save to r-drive failed: %s, will try again later." % f1)
                     t0 = t
                     huge_list = []
             except:  # skip value not in dictionary keys
