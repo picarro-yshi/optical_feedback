@@ -1,12 +1,13 @@
 analyzerIP: "10.100.3.111"  # "localhost"
 
-# for sensor data streaming, /Volumes/Data/
-sensor_folder_path: "crd_optical_feedback_analyzer_rnd/SensorStream_logging"
+# for sensor data streaming: 
+# notice the header: [Mac] /Volumes/Data/  [Linux] /mnt/r/
+sensor_folder_path: "/mnt/r/crd_optical_feedback_analyzer_rnd/SensorStream_logging"
 save_interval: 60  # s, save a csv file every 1 min
 
 # for save RDF file
-optical_folder_path: "crd_optical_feedback_analyzer_rnd/RDF_logging/20250128_6029_dwells"
-output_folder: "crd_optical_feedback_analyzer_rnd/combined_data/20250128_6029_dwells"
+optical_folder_path: "/mnt/r/crd_optical_feedback_analyzer_rnd/RDF_logging/20250203_6028_6228"
+output_folder: "/mnt/r/crd_optical_feedback_analyzer_rnd/combined_data/20250203_6028_6228combo"
 
 
 

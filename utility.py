@@ -54,18 +54,6 @@ def load_conf():
     with open("config.yaml", 'r') as f:
         conf = yaml.load(f, Loader=yaml.SafeLoader)
         
-    op = platform.system()
-    if op == "Darwin":  # Mac
-        r_drive = "/Volumes/Data/"
-    elif op == "Linux":
-        r_drive = "/mnt/r/"
-    else:  # "Windows"
-        r_drive = "R:/"
-
-    conf["sensor_folder_path"] = r_drive + conf["sensor_folder_path"]
-    conf["optical_folder_path"] = r_drive + conf["optical_folder_path"]
-    conf["output_folder"] = r_drive + conf["output_folder"]
-        
     return conf
 
 
