@@ -1,5 +1,5 @@
 # stream sensor data to r-drive.
-# last updated: 2025.2.19
+# last updated: 2025.2.26
 
 import os
 import queue
@@ -67,17 +67,22 @@ if __name__ == "__main__":
     analyzerIP = conf["analyzerIP"]  # "10.100.3.36"
     SENSOR_FOLDER = conf["sensor_folder_path"]
     save_time = conf["save_interval"]  # 60, save csv every 60s
+    LOCAL_FOLDER = conf["local_folder_path"]
 
     t0 = int(time.time())
     epoch = 0
     huge_list = []
     sensor = [0] * COLUMN_NUM
-
     day_folder = 'Sensors_' + time.strftime("%Y%m%d")
+
     subfolder = os.path.join(SENSOR_FOLDER, day_folder)
     if not os.path.isdir(subfolder):
         os.mkdir(subfolder)
-    
+
+    subfolder = os.path.join(LOCAL_FOLDER, day_folder)
+    if not os.path.isdir(subfolder):
+        os.mkdir(subfolder)
+
     q = queue.Queue(100)
     listener = Listener(
         queue=q,
@@ -136,13 +141,17 @@ if __name__ == "__main__":
                     if day_folder != today:
                         subfolder = os.path.join(SENSOR_FOLDER, today)
                         os.mkdir(subfolder)
+                        subfolder = os.path.join(LOCAL_FOLDER, today)
+                        os.mkdir(subfolder)
                         day_folder = today
                         print("a new day just started: ", time.ctime())
+
+                    p = os.path.join(LOCAL_FOLDER, day_folder, f1)
+                    my_df.to_csv(p, index=False, header=header)
 
                     p = os.path.join(SENSOR_FOLDER, day_folder, f1)
                     try:
                         my_df.to_csv(p, index=False, header=header)
-                        # print("file saved:  %s" % f1)
                     except:
                         # save locally then move later
                         my_df.to_csv("../temp/" + f1, index=False, header=header)

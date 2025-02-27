@@ -53,7 +53,6 @@ def datetimeToTimestamp(t):
 def load_conf():
     with open("config.yaml", 'r') as f:
         conf = yaml.load(f, Loader=yaml.SafeLoader)
-        
     return conf
 
 

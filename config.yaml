@@ -1,6 +1,7 @@
 analyzerIP: "10.100.3.111"  # "localhost"
 
-# for sensor data streaming: 
+# for sensor data streaming:
+local_folder_path: "/home/picarro/Documents/SensorStream_logging"
 # notice the header: [Mac] /Volumes/Data/  [Linux] /mnt/r/
 sensor_folder_path: "/mnt/r/crd_optical_feedback_analyzer_rnd/SensorStream_logging"
 save_interval: 60  # s, save a csv file every 1 min
