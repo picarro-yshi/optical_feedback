@@ -1,5 +1,6 @@
 # merge optical data with sensor data
-# last updated: 2025.2.25
+# last updated: 2025.3.6
+# using multiprocessing
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ import time
 import pandas as pd
 import os
 from glob import glob
+import multiprocessing
 
 from tables import open_file, Filters
 from tables import Float32Col, Float64Col, Int16Col, Int32Col, Int64Col
@@ -14,6 +16,7 @@ from tables import UInt16Col, UInt32Col, UInt64Col
 import traceback
 
 from utility import header, unixTimeToTimestamp, load_conf
+from utility import controlData_key, sensorData_key, rdData_key
 
 
 def fillRdfTables(fileName, spectrumDict, attrs=None):
@@ -120,9 +123,8 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         cal_file
     """
 
-    rd_data = np.genfromtxt(optical_path, delimiter=',',
-                            names=True,
-                            dtype=None, encoding='utf-8')
+    rd_data2 = pd.read_csv(optical_path)
+    rd_data = rd_data2.to_numpy()
 
     ##########################################################
     num_rd = rd_data['timestamp'].size
@@ -159,8 +161,15 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         "schemeInfo": None,
     }
 
+    # 1. rdData
+    # initiate with zeros
+    zero_fill = [0] * num_rd
+    for item in rdData_key:
+        spectrumDict['rdData'][item] = zero_fill
+
+    # fill in data
     c = 29979.2458 #speed of light cm / us
-    spectrumDict['rdData']["timestamp"] = np.asarray([unixTimeToTimestamp(t) for t in rd_data['timestamp']]) #UNIX epoch time in seconds -> picarro timestamp in ms  
+    spectrumDict['rdData']["timestamp"] = np.asarray([unixTimeToTimestamp(t) for t in rd_data['timestamp']]) #UNIX epoch time in seconds -> picarro timestamp in ms
     spectrumDict['rdData']["wlmAngle"] = rd_data['wlm_angle']
     spectrumDict['rdData']["waveNumberSetpoint"] = rd_data["waveNumberSetpoint"]
     spectrumDict['rdData']["uncorrectedAbsorbance"] = 1e6 / (c * rd_data['ringdown_time']) #unit conversion: us -> ppm/cm
@@ -169,38 +178,36 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
     spectrumDict['rdData']["count"] = np.ones(num_rd, dtype=int)
     spectrumDict['rdData']["pztValue"] = rd_data['Cavity_phase']
     spectrumDict['rdData']["laserUsed"] = np.ones(num_rd, dtype=int)
-    spectrumDict['rdData']["subschemeId"] = rd_data["subschemeID"].astype(int) #includes fit flag 32768, 16384 ignore, 8192 is pzt center, 4096 enable cal  
-    spectrumDict['rdData']["schemeRow"] = rd_data['schemeRow'].astype(int) 
-    spectrumDict['rdData']["ratio1"] = np.rint(rd_data["ratio1"] * 32768).astype(int) 
-    spectrumDict['rdData']["ratio2"] = np.rint(rd_data["ratio2"] * 32768).astype(int) 
+    spectrumDict['rdData']["subschemeId"] = rd_data["subschemeID"].astype(int) #includes fit flag 32768, 16384 ignore, 8192 is pzt center, 4096 enable cal
+    spectrumDict['rdData']["schemeRow"] = rd_data['schemeRow'].astype(int)
+    spectrumDict['rdData']["ratio1"] = np.rint(rd_data["ratio1"] * 32768).astype(int)
+    spectrumDict['rdData']["ratio2"] = np.rint(rd_data["ratio2"] * 32768).astype(int)
     spectrumDict['rdData']["coarseLaserCurrent"] = rd_data["laser_phase"].astype(int)
     spectrumDict['rdData']["fitAmplitude"] = rd_data["fit_amplitude"]
     spectrumDict['rdData']["fitBackground"] = rd_data["fit_offset"]
     spectrumDict['rdData']["fitRmsResidual"] = rd_data['fit_rms_residual']
-    spectrumDict['rdData']["frontMirrorDac"] = rd_data['front_mirror'].astype(int) 
-    spectrumDict['rdData']["backMirrorDac"] = rd_data['back_mirror'].astype(int) 
+    spectrumDict['rdData']["frontMirrorDac"] = rd_data['front_mirror'].astype(int)
+    spectrumDict['rdData']["backMirrorDac"] = rd_data['back_mirror'].astype(int)
     spectrumDict['rdData']["gainCurrentDac"] = rd_data['laser_gain'].astype(int)
     spectrumDict['rdData']["soaCurrentDac"] = rd_data['laser_SOA'].astype(int)
-    spectrumDict['rdData']["coarsePhaseDac"] = rd_data['laser_phase'].astype(int) # before phase temp correction 
-    spectrumDict['rdData']["extra1"] = rd_data['extra1'].astype(int) 
+    spectrumDict['rdData']["coarsePhaseDac"] = rd_data['laser_phase'].astype(int) # before phase temp correction
+    spectrumDict['rdData']["extra1"] = rd_data['extra1'].astype(int)
     spectrumDict['rdData']["extra2"] = rd_data['extra2'].astype(int)
     spectrumDict['rdData']["extra3"] = rd_data['extra3'].astype(int)
-    spectrumDict['rdData']["extra4"] = rd_data['extra4'].astype(int) 
+    spectrumDict['rdData']["extra4"] = rd_data['extra4'].astype(int)
     spectrumDict['rdData']["sequenceNumber"] = np.arange(1,num_rd+1) #continually incrementing
-    spectrumDict['rdData']["average1"] = (rd_data['wlm_eta1'] +  rd_data['wlm_ref1']) / 2
-    spectrumDict['rdData']["average2"] = (rd_data['wlm_eta2'] +  rd_data['wlm_ref2']) / 2
+    spectrumDict['rdData']["average1"] = (rd_data['wlm_eta1'] + rd_data['wlm_ref1']) / 2
+    spectrumDict['rdData']["average2"] = (rd_data['wlm_eta2'] + rd_data['wlm_ref2']) / 2
     spectrumDict['rdData']["modeIndex"] = rd_data['modeIndex'].astype(int)
     # spectrumDict['rdData']["pztCntrlRef"] = fast pzt
     # spectrumDict['rdData']["cosPztCntrlRef"] = fast pzt
     # spectrumDict['rdData']["sinPztCntrlRef"] = fast pzt
 
-    #keys being faked
-
     # dont have schemeVersionAndTable, adding a fake. Everything is going to be from scheme table 1 with python scheme version (1): 
     # result is 17 for all rd (16 * schemeVersion + schemeTable) 
     spectrumDict['rdData']["schemeVersionAndTable"] = 17 + np.zeros(num_rd).astype(int)
 
-    if have_cal_file:    
+    if have_cal_file:
         spectrumDict['rdData']["waveNumber"] = laser_cal_obj.convert_ratios_to_freq(
                                                     rd_data['waveNumberSetpoint'],
                                                     rd_data["ratio1"],
@@ -210,15 +217,7 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         spectrumDict['rdData']["waveNumber"] = rd_data['waveNumberSetpoint']
         spectrumDict['rdData']["angleSetpoint"] = wlm_angle_recalc
 
-    spectrumDict['rdData']["cavityPressure"] = 140 * np.ones(num_rd) # needs merging 
-
-    #keys being filled with zeros
-    spectrumDict['rdData']["tunerValue"] = np.zeros(num_rd, dtype=int) #dont have this one
-    spectrumDict['rdData']["ringdownThreshold"] = np.zeros(num_rd, dtype=int) #dont have this one
-    spectrumDict['rdData']["fineLaserCurrent"] = np.zeros(num_rd, dtype=int) # dont have this
-    spectrumDict['rdData']["laserTemperature"] = np.zeros(num_rd) # needs merging
-    spectrumDict['rdData']["etalonTemperature"] = np.zeros(num_rd) # This one is a mess, the thermister is hooked to the wrong WLM
-    spectrumDict['rdData']["finePhaseDac"] = np.zeros(num_rd, dtype=int) # dont have this one
+    spectrumDict['rdData']["cavityPressure"] = 140 * np.ones(num_rd) # needs merging
 
     # new keys being added
     spectrumDict['rdData']["opticalPhase"] = rd_data['OF_phase']
@@ -232,8 +231,8 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
     spectrumDict['rdData']["FSRDisplaced"] = rd_data['FSRDisplaced'].astype(int)
     spectrumDict['rdData']["laser_gain"] = rd_data['laser_gain']
     spectrumDict['rdData']["laser_SOA"] = rd_data['laser_SOA']
-    
-    #controlData
+
+    # 2. controlData
     fit_flag = spectrumDict['rdData']["subschemeId"] // 32768 == 1
     num_spectra = np.sum(fit_flag)
     #this counts the ringdowns in each spectra (from one fit flag to the next)
@@ -241,24 +240,49 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
     spectrumDict["controlData"]['SpectrumQueueSize'] = np.zeros(num_spectra)
     spectrumDict["controlData"]['Latency'] = np.zeros(num_spectra)
 
-    # sensor data
-    # merge all data in the sensor data list
+    # 3. sensor data
+    # stack all csv in the sensor data list
     combined_df = pd.concat(map(pd.read_csv, sensor_data_list))  # , ignore_index=True)
-    for item in header:
-        spectrumDict["sensorData"][item] = combined_df[item].tolist()
+
+    # fill in df data; if key not exist, fill with zero
+    rows, cols = combined_df.shape
+    zero_list = [0] * rows
+    for item in sensorData_key:
+        try:
+            spectrumDict["sensorData"][item] = combined_df[item].tolist()
+        except:
+            spectrumDict["sensorData"][item] = zero_list
 
     # save spectrumDict to h5 file
     fillRdfTables(out_path, spectrumDict)
 
 
+conf = load_conf()
+# print(conf)
+optical_folder_path = conf["optical_folder_path"]
+sensor_folder_path = conf["sensor_folder_path"]
+output_folder = conf["output_folder"]
+
+def work_log(op, matchDict):
+    lst = os.listdir(output_folder)
+    x = len(lst)
+    if x and x % 20 == 0:
+        print("... %s RDF files created" % x)
+
+    if matchDict[op]:
+        p1 = os.path.join(optical_folder_path, op + '.csv')
+        out_path = os.path.join(output_folder, op + '.h5')
+        try:
+            convert_to_rdf(p1, matchDict[op], out_path, None)
+            print("created RDF for optical file: %s.csv" % op)
+        except:
+            print("Failed to create RDF file for: %s.csv " % op)
+    else:
+        print("No sensor data for optical file: %s.csv" % op)
+
+
 if __name__ == "__main__":
     t0 = time.time()
-
-    conf = load_conf()
-    print(conf)
-    optical_folder_path = conf["optical_folder_path"]
-    sensor_folder_path = conf["sensor_folder_path"]
-    output_folder = conf["output_folder"]
 
     # get the optical data time range and file list
     p = os.path.join(optical_folder_path, "*.csv")
@@ -266,7 +290,7 @@ if __name__ == "__main__":
     optical_file_list = []
     # only include sensor folders within this date range
     date_range = []  # ['20250123', '20250124']
-    
+
     for p in ls:
         x = p.split('/')[-1]
         f1 = x[:-4]  # 20250123_1519
@@ -304,6 +328,7 @@ if __name__ == "__main__":
 
     # pick all available sensor file paths
     temp = []
+    print("* pick sensor data folders: ")
     for item in sensor_folder_list:
         print(item)
         p = os.path.join(sensor_folder_path, item, "*.csv")
@@ -316,17 +341,17 @@ if __name__ == "__main__":
     # create dictionary, # {optical file name: list of sensor file path}
     sensor_dynamic_list = sensor_file_path_list
     matchDict = {}
-    
+
     for (start, end) in optical_time_list:
         matchDict[start] = []
         # print("sensor list length: ", len(sensor_dynamic_list))
         x = []
         for s in sensor_dynamic_list:
             filename = (s.split('/')[-1])[:-4]  # 20250123_1248
-    
+
             if start <= filename < end:  # < end, avoid duplicate, but may include less data (< 1 min)
                 x.append(s)
-    
+
             if filename == end:
                 # create dictionary
                 matchDict[start] = x
@@ -336,22 +361,9 @@ if __name__ == "__main__":
     # print(matchDict)
 
     # create h5
-    i = 1
-    for op in optical_file_list:
-        if i % 20 == 0:
-            print("... %s RDF files created" % i)
-        i += 1
-
-        if matchDict[op]:
-            p1 = os.path.join(optical_folder_path, op + '.csv')
-            out_path = os.path.join(output_folder, op+'.h5')
-            try:
-                convert_to_rdf(p1, matchDict[op], out_path, None)
-                # print("created RDF for optical file: %s.csv" % op)
-            except:
-                print("Failed to create RDF file for: %s.csv " % op)
-        else:
-            print("No sensor data for optical file: %s.csv" % op)
+    print("Multiprocessing Pool start:")
+    with multiprocessing.Pool() as pool:  # (processes=4)
+        pool.starmap(work_log, [(d, matchDict) for d in optical_file_list])
 
     t = time.time() - t0
     print("* Merge finished! took %.2f min " % (t/60))

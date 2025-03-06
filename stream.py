@@ -1,5 +1,5 @@
 # stream sensor data to r-drive.
-# last updated: 2025.2.26
+# last updated: 2025.3.6
 
 import os
 import queue
@@ -42,22 +42,25 @@ sensorNumberDict = {
     32: 9,
     33: 10,
     34: 11,
-    10: 12,
-    11: 13,
-    12: 14,
-    13: 15,
-    14: 16,
-    15: 17,
+    61: 12,
+    62: 13,
+    63: 14,
+    10: 15,
+    11: 16,
+    12: 17,
+    13: 18,
+    14: 19,
+    15: 20,
 
-    4: 18,  # save frequency 1/5s
-    5: 19,
-    6: 20,
-    28: 21,
-    7: 22,
-    8: 23,
-    29: 24,
-    30: 25,
-    35: 26,
+    4: 21,  # save frequency 1/5s
+    5: 22,
+    6: 23,
+    28: 24,
+    7: 25,
+    8: 26,
+    29: 27,
+    30: 28,
+    35: 29,
 }
 COLUMN_NUM = len(sensorNumberDict)  # column number in csv file
 

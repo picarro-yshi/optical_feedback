@@ -16,6 +16,9 @@ header = [
     "OutletValve",
     "ValveMask",
     "MPVPosition",
+    "PortId",
+    "PortState",
+    "MeasSetId",
     "Etalon1",
     "Reference1",
     "Etalon2",
@@ -32,6 +35,130 @@ header = [
     "HotBoxTec",
     "HotBoxHeater",
     "FanState",
+]
+
+rdData_key = [
+    'angleSetpoint',
+    'average1',
+    'average2',
+    'backMirrorDac',
+    'cavityPressure',
+    'coarseLaserCurrent',
+    'coarsePhaseDac',
+    'correctedAbsorbance',
+    'cosPztCntrlRef',
+    'count',
+    'etalonTemperature',
+    'extra1',
+    'extra2',
+    'extra3',
+    'extra4',
+    'fineLaserCurrent',
+    'finePhaseDac',
+    'fitAmplitude',
+    'fitBackground',
+    'fitRmsResidual',
+    'frontMirrorDac',
+    'fsrIndex',
+    'gainCurrentDac',
+    'laserTemperature',
+    'laserUsed',
+    'modeIndex',
+    'pztCntrlRef',
+    'pztValue',
+    'ratio1',
+    'ratio2',
+    'ringdownThreshold',
+    'schemeRow',
+    'schemeVersionAndTable',
+    'sequenceNumber',
+    'sinPztCntrlRef',
+    'soaCurrentDac',
+    'status',
+    'subschemeId',
+    'timestamp',
+    'tunerValue',
+    'uncorrectedAbsorbance',
+    'waveNumber',
+    'waveNumberSetpoint',
+    'wlmAngle',
+]
+
+sensorData_key = [
+    'AccelX', 
+    'AccelY', 
+    'AccelZ', 
+    'Ambient2Pressure', 
+    'AmbientPressure', 
+    'Battery_Charge', 
+    'Battery_Current', 
+    'Battery_Temperature', 
+    'Battery_Voltage', 
+    'Cavity2Pressure', 
+    'Cavity2Temp', 
+    'Cavity2Temp1', 
+    'Cavity2Temp2', 
+    'Cavity2Temp3', 
+    'Cavity2Temp4', 
+    'CavityPressure', 
+    'CavityTemp', 
+    'CavityTemp1', 
+    'CavityTemp2', 
+    'CavityTemp3', 
+    'CavityTemp4', 
+    'DasTemp', 
+    'Etalon1', 
+    'Etalon2', 
+    'EtalonTemp', 
+    'FanState', 
+    'FilterHeater', 
+    'FilterHeaterTemp', 
+    'Flow1', 
+    'HotBoxHeater', 
+    'HotBoxHeatsinkTemp', 
+    'HotBoxTec', 
+    'InletValve', 
+    'Laser1Current', 
+    'Laser1Tec', 
+    'Laser1Temp', 
+    'Laser2Current', 
+    'Laser2Tec', 
+    'Laser2Temp', 
+    'Laser3Current', 
+    'Laser3Tec', 
+    'Laser3Temp', 
+    'Laser4Current', 
+    'Laser4Tec', 
+    'Laser4Temp', 
+    'MPVPosition', 
+    'MeasSetId', 
+    'OutletValve', 
+    'PortId', 
+    'PortState', 
+    'ProcessedLoss1', 
+    'ProcessedLoss2', 
+    'ProcessedLoss3', 
+    'ProcessedLoss4', 
+    'Ratio1', 
+    'Ratio2', 
+    'Reference1', 
+    'Reference2', 
+    'SchemeTable', 
+    'SchemeVersion', 
+    'SgdbrAPulseTempPtp', 
+    'SgdbrBPulseTempPtp', 
+    'SpectrumID', 
+    'ValveMask', 
+    'WarmBoxHeatsinkTemp', 
+    'WarmBoxTec', 
+    'WarmBoxTemp', 
+    'timestamp',
+]
+
+controlData_key = [
+    'Latency', 
+    'RDDataSize', 
+    'SpectrumQueueSize',
 ]
 
 
@@ -118,6 +245,10 @@ STREAM_MemberTypeDict[55] = 'STREAM_Cavity2Temp4'  #
 STREAM_MemberTypeDict[56] = 'STREAM_FilterHeaterTemp'  #
 STREAM_MemberTypeDict[57] = 'STREAM_FilterHeater'  #
 STREAM_MemberTypeDict[58] = 'STREAM_Cavity2Temp'  #
+STREAM_MemberTypeDict[60] = 'STREAM_SgdbrBPulseTempPtp'  # 
+STREAM_MemberTypeDict[61] = 'STREAM_PortId'  # 
+STREAM_MemberTypeDict[62] = 'STREAM_PortState'  # 
+STREAM_MemberTypeDict[63] = 'STREAM_MeasSetId'  # 
 
 
 # stream data keys:
@@ -130,6 +261,9 @@ STREAM_MemberTypeDict[58] = 'STREAM_Cavity2Temp'  #
 # STREAM_HotBoxTec
 # STREAM_HotBoxHeater
 # STREAM_FanState
+# STREAM_PortId
+# STREAM_PortState
+# STREAM_MeasSetId
 # STREAM_Laser3Temp
 # STREAM_Laser3Tec
 # STREAM_Laser4Temp
@@ -141,6 +275,7 @@ STREAM_MemberTypeDict[58] = 'STREAM_Cavity2Temp'  #
 # STREAM_OutletValve
 # STREAM_ValveMask
 # STREAM_MPVPosition
+
 # STREAM_Etalon1
 # STREAM_Reference1
 # STREAM_Etalon2
