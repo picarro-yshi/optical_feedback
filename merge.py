@@ -123,7 +123,10 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         cal_file
     """
 
-    rd_data = pd.read_csv(optical_path)
+    # rd_data = pd.read_csv(optical_path)
+    rd_data = np.genfromtxt(optical_path, delimiter=',',
+                        names=True,
+                        dtype=None, encoding='utf-8')
 
     ##########################################################
     num_rd = rd_data['timestamp'].size
