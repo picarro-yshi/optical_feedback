@@ -123,8 +123,7 @@ def convert_to_rdf(optical_path, sensor_data_list, out_path, cal_file):
         cal_file
     """
 
-    rd_data2 = pd.read_csv(optical_path)
-    rd_data = rd_data2.to_numpy()
+    rd_data = pd.read_csv(optical_path)
 
     ##########################################################
     num_rd = rd_data['timestamp'].size
@@ -274,7 +273,7 @@ def work_log(op, matchDict):
         out_path = os.path.join(output_folder, op + '.h5')
         try:
             convert_to_rdf(p1, matchDict[op], out_path, None)
-            print("created RDF for optical file: %s.csv" % op)
+            # print("created RDF for optical file: %s.csv" % op)
         except:
             print("Failed to create RDF file for: %s.csv " % op)
     else:
